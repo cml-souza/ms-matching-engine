@@ -82,15 +82,51 @@ public class OrderBook {
                 bidOutput = totalQty + "@" + entry.getKey();
             }
             String askOutput = "";
-            if(askIterator.hasNext()) {
+            if (askIterator.hasNext()) {
                 Map.Entry<Double, LinkedList<Order>> entry = askIterator.next();
                 int totalQty = entry.getValue().stream().mapToInt(Order::getRemainingQty).sum();
                 askOutput = totalQty + "@" + entry.getKey();
             }
-            
+
             System.out.printf("%-19s | %s%n", bidOutput, askOutput);
         }
         System.out.println();
+    }
+
+    private void repositionPeggedOrder(Order order, double newPrice){
+        double oldPrice = order.getPrice();
+        Side side = order.getSide();
+
+        TreeMap<Double, LinkedList<Order>> targetBook = (side == Side.BUY) ? bids : asks;
+        LinkedList<Order> oldPriceQueue  =  targetBook.get(oldPrice);
+        if (oldPriceQueue != null) {
+            oldPriceQueue.remove(order);
+        }
+
+        if (oldPriceQueue.isEmpty()) {
+            targetBook.remove(oldPrice);
+        }
+        order.setPrice(newPrice);
+        targetBook.computeIfAbsent(newPrice, k -> new LinkedList<>()).addLast(order);
+    }
+
+    public void updatePeggedOrders() {
+        Double bstBid = bids.isEmpty() ? null : bids.firstKey();
+        Double bstAks = asks.isEmpty() ? null : asks.firstKey();
+
+        for (Order order : orderMap.values()) {
+            if (!order.isPegged()) continue;
+            Double newPrice = null;
+            if (order.getType() == OrderType.PEGGED_BID && bstBid != null) {
+                newPrice = bstBid;
+            } else if (order.getType() == OrderType.PEGGED_OFFER && bstAks != null) {
+                newPrice = bstAks;
+            }
+
+            if (newPrice != null && order.getPrice() != newPrice){
+                repositionPeggedOrder(order, newPrice);
+            }
+        }
     }
 
 }
