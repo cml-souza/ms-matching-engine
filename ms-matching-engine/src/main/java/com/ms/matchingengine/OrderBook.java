@@ -21,4 +21,16 @@ public class OrderBook {
     public Map<String, Order> getOrderMap() {
         return orderMap;
     }
+
+    
+    public void addLimitOrder(Order order) {
+        // Saving the order on the orderMap property to map and use it after for cancelling/modifying the order
+        orderMap.put(order.getId(), order);
+
+        // Defining Side (Bids or Asks)
+        TreeMap<Double, LinkedList<Order>> targetBook = (order.getSide() == Side.BUY) ? bids : asks;
+
+        // Inserting into the TreeMap mainting the chronological line
+        targetBook.computeIfAbsent(order.getPrice(), k -> new LinkedList<>()).addLast(order);
+    }
 }
