@@ -3,61 +3,60 @@ package com.ms.matchingengine;
 import java.util.*;
 
 public class OrderBook {
-    TreeMap<Double, LinkedList<Order>> bids = new TreeMap<>(Comparator.reverseOrder());
-    TreeMap<Double, LinkedList<Order>> asks = new TreeMap<>();
-    Map<String, Order> orderMap = new HashMap<>();
+    //Buy orders are sorted by highest price first
+    TreeMap<Double, LinkedList<Order>> buyOrders = new TreeMap<>(Comparator.reverseOrder());
+    // Sell orders are sorted by lowest price first
+    TreeMap<Double, LinkedList<Order>> sellOrders = new TreeMap<>();
+    Map<String, Order> ordersById = new HashMap<>();
 
-    // The TreeMap property is being used to maintain de Order in our book, decrescent for bids and crescent, the LinkedList is to maintain FIFO rule
-    // and the HashMap property will be used to do the cancellation of orders more efficiently by looking for its Id in the book.
-
-    public TreeMap<Double, LinkedList<Order>> getBids() {
-        return bids;
+    public TreeMap<Double, LinkedList<Order>> getBuyOrders() {
+        return buyOrders;
     }
 
-    public TreeMap<Double, LinkedList<Order>> getAsks() {
-        return asks;
+    public TreeMap<Double, LinkedList<Order>> getSellOrders() {
+        return sellOrders;
     }
 
-    public Map<String, Order> getOrderMap() {
-        return orderMap;
+    public Map<String, Order> getOrdersById() {
+        return ordersById;
     }
 
 
-    public void addLimitOrder(Order order) {
-        // Saving the order on the orderMap property to map and use it after for cancelling/modifying the order
-        orderMap.put(order.getId(), order);
+    public void addLimitOrderToBook(Order order) {
+        // Saving the order on the ordersById property to map and use it after for cancelling/modifying the order
+        ordersById.put(order.getId(), order);
 
-        // Defining Side (Bids or Asks)
-        TreeMap<Double, LinkedList<Order>> targetBook = (order.getSide() == Side.BUY) ? bids : asks;
+        TreeMap<Double, LinkedList<Order>> orderBook = (order.getSide() == Side.BUY) ? buyOrders : sellOrders;
 
-        // Inserting into the TreeMap mainting the chronological line
-        targetBook.computeIfAbsent(order.getPrice(), k -> new LinkedList<>()).addLast(order);
+        // Orders at the same price follow FIFO priority.
+        orderBook.computeIfAbsent(order.getPrice(), k -> new LinkedList<>()).addLast(order);
     }
 
-    public void executeMarketOrder(Order marketOrder) {
-        while (marketOrder.getRemainingQty() > 0 && !asks.isEmpty()) {
-            TreeMap<Double, LinkedList<Order>> targetBook = (marketOrder.getSide() == Side.BUY) ? asks : bids;
+    public void matchMarketOrder(Order marketOrder) {
+        TreeMap<Double, LinkedList<Order>> oppositeBook = (marketOrder.getSide() == Side.BUY) ? sellOrders : buyOrders;
 
-            Double bstPrice = targetBook.firstKey();
+        while (!oppositeBook.isEmpty() && marketOrder.getRemainingQty() > 0) {
+            Double bestPrice = oppositeBook.firstKey();
 
-            LinkedList<Order> priceQueue = targetBook.get(bstPrice);
+            LinkedList<Order> priceQueue = oppositeBook.get(bestPrice);
 
             Order restingOrder = priceQueue.peekFirst();
 
-            int negociateTradeQty = Math.min(marketOrder.getRemainingQty(), restingOrder.getRemainingQty());
+            int executedQuantity = Math.min(marketOrder.getRemainingQty(), restingOrder.getRemainingQty());
 
-            marketOrder.reduceremainingQty(negociateTradeQty);
-            restingOrder.reduceremainingQty(negociateTradeQty);
+            marketOrder.reduceRemainingQty(executedQuantity);
+            restingOrder.reduceRemainingQty(executedQuantity);
 
-            System.out.println("Trade, price: " + bstPrice + ", qty: " + negociateTradeQty);
+            System.out.println("Trade, price: " + bestPrice + ", qty: " + executedQuantity);
 
+            // After being consumed the market order is removed from the book
             if (restingOrder.getRemainingQty() == 0) {
                 priceQueue.removeFirst();
-                orderMap.remove(restingOrder.getId());
+                ordersById.remove(restingOrder.getId());
             }
 
             if (priceQueue.isEmpty()) {
-                asks.remove(bstPrice);
+                oppositeBook.remove(bestPrice);
             }
         }
     }
@@ -66,65 +65,66 @@ public class OrderBook {
         System.out.println("Ordens de Compra    | Ordens de Venda");
         System.out.println("--------------------|-----------------");
 
-        Set<Map.Entry<Double, LinkedList<Order>>> bidEntries = bids.entrySet();
-        Set<Map.Entry<Double, LinkedList<Order>>> askEntries = asks.entrySet();
+        Iterator<Map.Entry<Double, LinkedList<Order>>> buyIterator = buyOrders.entrySet().iterator();
+        Iterator<Map.Entry<Double, LinkedList<Order>>> sellIterator = sellOrders.entrySet().iterator();
 
-        int maxRows = Math.max(bidEntries.size(), askEntries.size());
+        int maxRows = Math.max(buyOrders.size(), sellOrders.size());
 
-        Iterator<Map.Entry<Double, LinkedList<Order>>> bidIterator = bidEntries.iterator();
-        Iterator<Map.Entry<Double, LinkedList<Order>>> askIterator = askEntries.iterator();
 
         for (int i = 0; i < maxRows; i++) {
-            String bidOutput = "";
-            if (bidIterator.hasNext()) {
-                Map.Entry<Double, LinkedList<Order>> entry = bidIterator.next();
+            String buyOutput = "";
+            String sellOutput = "";
+            if (buyIterator.hasNext()) {
+                Map.Entry<Double, LinkedList<Order>> entry = buyIterator.next();
                 int totalQty = entry.getValue().stream().mapToInt(Order::getRemainingQty).sum();
-                bidOutput = totalQty + "@" + entry.getKey();
+                buyOutput = totalQty + "@" + entry.getKey();
             }
-            String askOutput = "";
-            if (askIterator.hasNext()) {
-                Map.Entry<Double, LinkedList<Order>> entry = askIterator.next();
+            if (sellIterator.hasNext()) {
+                Map.Entry<Double, LinkedList<Order>> entry = sellIterator.next();
                 int totalQty = entry.getValue().stream().mapToInt(Order::getRemainingQty).sum();
-                askOutput = totalQty + "@" + entry.getKey();
+                sellOutput = totalQty + "@" + entry.getKey();
             }
 
-            System.out.printf("%-19s | %s%n", bidOutput, askOutput);
+            System.out.printf("%-19s | %s%n", buyOutput, sellOutput);
         }
         System.out.println();
     }
 
-    private void repositionPeggedOrder(Order order, double newPrice){
+    private void updatePeggedOrderPrice(Order order, double newPrice){
+        // When the book changes the pegged order will follow to track the best price
         double oldPrice = order.getPrice();
         Side side = order.getSide();
 
-        TreeMap<Double, LinkedList<Order>> targetBook = (side == Side.BUY) ? bids : asks;
-        LinkedList<Order> oldPriceQueue  =  targetBook.get(oldPrice);
+        TreeMap<Double, LinkedList<Order>> orderBook = (side == Side.BUY) ? buyOrders : sellOrders;
+        LinkedList<Order> oldPriceQueue  =  orderBook.get(oldPrice);
         if (oldPriceQueue != null) {
             oldPriceQueue.remove(order);
         }
 
         if (oldPriceQueue.isEmpty()) {
-            targetBook.remove(oldPrice);
+            orderBook.remove(oldPrice);
         }
         order.setPrice(newPrice);
-        targetBook.computeIfAbsent(newPrice, k -> new LinkedList<>()).addLast(order);
+        orderBook.computeIfAbsent(newPrice, k -> new LinkedList<>()).addLast(order);
     }
 
     public void updatePeggedOrders() {
-        Double bstBid = bids.isEmpty() ? null : bids.firstKey();
-        Double bstAks = asks.isEmpty() ? null : asks.firstKey();
+        Double bestBid = buyOrders.isEmpty() ? null : buyOrders.firstKey();
+        Double bestOffer = sellOrders.isEmpty() ? null : sellOrders.firstKey();
 
-        for (Order order : orderMap.values()) {
-            if (!order.isPegged()) continue;
+        for (Order order : ordersById.values()) {
+            if (order.getType() != OrderType.PEGGED_BID && order.getType() != OrderType.PEGGED_OFFER){
+                continue;
+            }
             Double newPrice = null;
-            if (order.getType() == OrderType.PEGGED_BID && bstBid != null) {
-                newPrice = bstBid;
-            } else if (order.getType() == OrderType.PEGGED_OFFER && bstAks != null) {
-                newPrice = bstAks;
+            if (order.getType() == OrderType.PEGGED_BID && bestBid != null) {
+                newPrice = bestBid;
+            } else if (order.getType() == OrderType.PEGGED_OFFER && bestOffer != null) {
+                newPrice = bestOffer;
             }
 
             if (newPrice != null && order.getPrice() != newPrice){
-                repositionPeggedOrder(order, newPrice);
+                updatePeggedOrderPrice(order, newPrice);
             }
         }
     }
