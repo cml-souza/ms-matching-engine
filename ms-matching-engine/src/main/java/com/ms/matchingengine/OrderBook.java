@@ -22,7 +22,7 @@ public class OrderBook {
         return orderMap;
     }
 
-    
+
     public void addLimitOrder(Order order) {
         // Saving the order on the orderMap property to map and use it after for cancelling/modifying the order
         orderMap.put(order.getId(), order);
@@ -32,5 +32,33 @@ public class OrderBook {
 
         // Inserting into the TreeMap mainting the chronological line
         targetBook.computeIfAbsent(order.getPrice(), k -> new LinkedList<>()).addLast(order);
+    }
+
+    public void executeMarketOrder(Order marketOrder) {
+        while (marketOrder.getRemainingQty() > 0 && !asks.isEmpty()) {
+            TreeMap<Double, LinkedList<Order>> targetBook = (marketOrder.getSide() == Side.BUY) ? asks : bids;
+            
+            Double bstPrice = targetBook.firstKey();
+
+            LinkedList<Order> priceQueue = targetBook.get(bstPrice);
+
+            Order restingOrder = priceQueue.peekFirst();
+
+            int negociateTradeQty = Math.min(marketOrder.getRemainingQty(), restingOrder.getRemainingQty());
+
+            marketOrder.reduceremainingQty(negociateTradeQty);
+            restingOrder.reduceremainingQty(negociateTradeQty);
+
+            System.out.println("Trade, price: " + bstPrice + ", qty: " + negociateTradeQty);
+
+            if (restingOrder.getRemainingQty() == 0) {
+                priceQueue.removeFirst();
+                orderMap.remove(restingOrder.getId());
+            }
+
+            if (priceQueue.isEmpty()) {
+                asks.remove(bstPrice);
+            }
+        }
     }
 }

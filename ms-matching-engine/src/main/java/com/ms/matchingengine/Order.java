@@ -6,6 +6,7 @@ public class Order {
     private OrderType type;
     private double price;
     private int quantity;
+    private int remainingQty;
     private long timestamp;
 
     // The use of primitive data types in this case is justified in order to maintain performance and efficiency, considering they're stored in memory and also because the values mustn't be null.
@@ -16,12 +17,18 @@ public class Order {
         this.type = type;
         this.price = price;
         this.quantity = quantity;
+        this.remainingQty = quantity;
         this.timestamp = System.nanoTime();
-
+        // The timestamp attribute will be used to maintain the priority line in case of orders at the same price.
     }
 
-    // The timestamp attribute will be used to maintain the priority line in case of orders at the same price.
 
+    public void reduceremainingQty(int quantityExecuted) {
+        if (quantityExecuted > remainingQty) {
+            throw new IllegalArgumentException("Executed quantity exceeds remaining orders quantity");
+        }
+        this.remainingQty -= quantityExecuted;
+    }
 
     public String getId() {
         return id;
@@ -41,6 +48,10 @@ public class Order {
 
     public int getQuantity() {
         return quantity;
+    }
+
+    public int getRemainingQty() {
+        return remainingQty;
     }
 
     public long getTimestamp() {
