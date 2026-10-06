@@ -37,7 +37,7 @@ public class OrderBook {
     public void executeMarketOrder(Order marketOrder) {
         while (marketOrder.getRemainingQty() > 0 && !asks.isEmpty()) {
             TreeMap<Double, LinkedList<Order>> targetBook = (marketOrder.getSide() == Side.BUY) ? asks : bids;
-            
+
             Double bstPrice = targetBook.firstKey();
 
             LinkedList<Order> priceQueue = targetBook.get(bstPrice);
@@ -61,4 +61,36 @@ public class OrderBook {
             }
         }
     }
+
+    public void printBook() {
+        System.out.println("Ordens de Compra    | Ordens de Venda");
+        System.out.println("--------------------|-----------------");
+
+        Set<Map.Entry<Double, LinkedList<Order>>> bidEntries = bids.entrySet();
+        Set<Map.Entry<Double, LinkedList<Order>>> askEntries = asks.entrySet();
+
+        int maxRows = Math.max(bidEntries.size(), askEntries.size());
+
+        Iterator<Map.Entry<Double, LinkedList<Order>>> bidIterator = bidEntries.iterator();
+        Iterator<Map.Entry<Double, LinkedList<Order>>> askIterator = askEntries.iterator();
+
+        for (int i = 0; i < maxRows; i++) {
+            String bidOutput = "";
+            if (bidIterator.hasNext()) {
+                Map.Entry<Double, LinkedList<Order>> entry = bidIterator.next();
+                int totalQty = entry.getValue().stream().mapToInt(Order::getRemainingQty).sum();
+                bidOutput = totalQty + "@" + entry.getKey();
+            }
+            String askOutput = "";
+            if(askIterator.hasNext()) {
+                Map.Entry<Double, LinkedList<Order>> entry = askIterator.next();
+                int totalQty = entry.getValue().stream().mapToInt(Order::getRemainingQty).sum();
+                askOutput = totalQty + "@" + entry.getKey();
+            }
+            
+            System.out.printf("%-19s | %s%n", bidOutput, askOutput);
+        }
+        System.out.println();
+    }
+
 }
