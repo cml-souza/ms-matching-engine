@@ -143,7 +143,7 @@ public class OrderBook {
         if (priceQueue != null) {
             priceQueue.remove(order);
             if (priceQueue.isEmpty()) {
-                orderBook.remove(order);
+                orderBook.remove(price);
             }
         }
         ordersById.remove(orderId);
