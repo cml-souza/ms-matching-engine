@@ -7,19 +7,16 @@ public class Order {
     private double price;
     private int quantity;
     private int remainingQty;
-    private long timestamp;
 
     // The use of primitive data types in this case is justified in order to maintain performance and efficiency, considering they're stored in memory and also because the values mustn't be null.
 
-    public Order(String id, Side side, OrderType type, double price, int quantity, int remainingQty, boolean isPegged, long timestamp) {
+    public Order(String id, Side side, OrderType type, double price, int quantity) {
         this.id = id;
         this.side = side;
         this.type = type;
         this.price = price;
         this.quantity = quantity;
-        this.remainingQty = remainingQty;
-        this.timestamp = timestamp;
-        // The timestamp attribute will be used to maintain the priority line in case of orders at the same price.
+        this.remainingQty = quantity;
     }
 
 
@@ -54,9 +51,6 @@ public class Order {
         return remainingQty;
     }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
 
     // Setters for future modifications
     public void setPrice(double price) {
@@ -76,7 +70,6 @@ public class Order {
                 ", price=" + price +
                 ", quantity=" + quantity +
                 ", remainingQty=" + remainingQty +
-                ", timestamp=" + timestamp +
                 '}';
     }
 }
