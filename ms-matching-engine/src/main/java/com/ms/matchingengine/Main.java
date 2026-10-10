@@ -37,5 +37,12 @@ public class Main {
         System.out.println("******** Testando modificação de ordem ********");
         book.modifyOrder("buy2", 10.1, 150);
         book.printBook();
+
+        System.out.println("******** Testando cruzamento de ordem ********");
+        Order marketSell1 = new Order("mSell1", Side.SELL, OrderType.MARKET, 0.0, 150);
+        Order marketBuy1 = new Order("mbuy1", Side.BUY, OrderType.MARKET, 0.0, 50);
+        book.matchMarketOrder(marketSell1);
+        book.matchMarketOrder(marketBuy1);
+        book.printBook();
     }
 }
