@@ -129,4 +129,27 @@ public class OrderBook {
         }
     }
 
+    public boolean cancelOrder(String orderId) {
+        Order order = ordersById.get(orderId);
+        if (order == null) {
+            System.out.println("Order not found: " + orderId);
+            return false;
+        }
+
+        double price = order.getPrice();
+        Side side = order.getSide();
+
+        TreeMap<Double, LinkedList<Order>> orderBook = (side == Side.BUY) ? buyOrders : sellOrders;
+        LinkedList<Order> priceQueue = orderBook.get(price);
+        if (priceQueue != null) {
+            priceQueue.remove(order);
+            if (priceQueue.isEmpty()) {
+                orderBook.remove(order);
+            }
+        }
+        ordersById.remove(orderId);
+        updatePeggedOrders();
+        System.out.println("Order cancelled: " + orderId);
+        return true;
+    }
 }
