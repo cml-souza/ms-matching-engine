@@ -33,5 +33,9 @@ public class Main {
         book.printBook();
 
         System.out.println(book.buyOrders);
+
+        System.out.println("******** Testando modificação de ordem ********");
+        book.modifyOrder("buy2", 10.1, 150);
+        book.printBook();
     }
 }
