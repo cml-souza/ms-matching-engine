@@ -98,38 +98,51 @@ public class OrderBook {
         LinkedList<Order> oldPriceQueue  =  orderBook.get(oldPrice);
         if (oldPriceQueue != null) {
             oldPriceQueue.remove(order);
-        }
-
-        if (oldPriceQueue.isEmpty()) {
-            orderBook.remove(oldPrice);
+            if (oldPriceQueue.isEmpty()) {
+                orderBook.remove(oldPrice);
+            }
         }
         order.setPrice(newPrice);
         orderBook.computeIfAbsent(newPrice, k -> new LinkedList<>()).addLast(order);
     }
 
     public void updatePeggedOrders() {
-        Double bestBid = buyOrders.isEmpty() ? null : buyOrders.firstKey();
-        Double bestOffer = sellOrders.isEmpty() ? null : sellOrders.firstKey();
+        Double bestBid = nonPeggedBestPrice(buyOrders);
+        Double bestOffer = nonPeggedBestPrice(sellOrders);
+
+        System.out.println("[DEBUG] Best Bid atual no book: " + bestBid);
 
         for (Order order : ordersById.values()) {
             if (order.getType() != OrderType.PEGGED_BID && order.getType() != OrderType.PEGGED_OFFER){
                 continue;
             }
+            System.out.println("[DEBUG] Analisando Pegged Order ID: " + order.getId() + " | Preço atual dela: " + order.getPrice());
             Double newPrice = null;
             if (order.getType() == OrderType.PEGGED_BID && bestBid != null) {
                 newPrice = bestBid;
             } else if (order.getType() == OrderType.PEGGED_OFFER && bestOffer != null) {
                 newPrice = bestOffer;
             }
-
+            System.out.println("[DEBUG] NewPrice calculado: " + newPrice);
             if (newPrice != null && order.getPrice() != newPrice){
+                System.out.println("[DEBUG] Atualizando preço da pegged order para: " + newPrice);
                 updatePeggedOrderPrice(order, newPrice);
             }
         }
     }
 
+    private Double nonPeggedBestPrice(TreeMap<Double, LinkedList<Order>> orderBook) {
+        for (Map.Entry<Double, LinkedList<Order>> priceEntry : orderBook.entrySet()) {
+            boolean hasNonPegged = priceEntry.getValue().stream().anyMatch(order -> order.getType() != OrderType.PEGGED_BID && order.getType() != OrderType.PEGGED_OFFER);
+            if (hasNonPegged) {
+                return priceEntry.getKey();
+            }
+        }
+        return null;
+    }
+
     public boolean cancelOrder(String orderId) {
-        Order order = ordersById.get(orderId);
+        Order order = ordersById.remove(orderId);
         if (order == null) {
             System.out.println("Order not found: " + orderId);
             return false;
