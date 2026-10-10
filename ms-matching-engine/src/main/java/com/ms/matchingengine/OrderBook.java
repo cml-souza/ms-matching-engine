@@ -22,7 +22,7 @@ public class OrderBook {
     }
 
 
-    public void addLimitOrderToBook(Order order) {
+    public void addOrderToBook(Order order) {
         // Saving the order on the ordersById property to map and use it after for cancelling/modifying the order
         ordersById.put(order.getId(), order);
 
@@ -65,26 +65,25 @@ public class OrderBook {
         System.out.println("Ordens de Compra    | Ordens de Venda");
         System.out.println("--------------------|-----------------");
 
-        Iterator<Map.Entry<Double, LinkedList<Order>>> buyIterator = buyOrders.entrySet().iterator();
-        Iterator<Map.Entry<Double, LinkedList<Order>>> sellIterator = sellOrders.entrySet().iterator();
+        List<String> buyLines = new ArrayList<>();
+        for (Map.Entry<Double, LinkedList<Order>> buyEntry : buyOrders.entrySet()) {
+            double price = buyEntry.getKey();
+            for (Order order : buyEntry.getValue()) {
+                buyLines.add(order.getRemainingQty() + " @ " + price);
+            }
+        }
+        List<String> sellLines = new ArrayList<>();
+        for (Map.Entry<Double, LinkedList<Order>> sellEntry : sellOrders.entrySet()) {
+            double price = sellEntry.getKey();
+            for (Order order : sellEntry.getValue()) {
+                sellLines.add(order.getRemainingQty() + " @ " + price);
+            }
+        }
 
-        int maxRows = Math.max(buyOrders.size(), sellOrders.size());
-
-
+        int maxRows = Math.max(buyLines.size(), sellLines.size());
         for (int i = 0; i < maxRows; i++) {
-            String buyOutput = "";
-            String sellOutput = "";
-            if (buyIterator.hasNext()) {
-                Map.Entry<Double, LinkedList<Order>> entry = buyIterator.next();
-                int totalQty = entry.getValue().stream().mapToInt(Order::getRemainingQty).sum();
-                buyOutput = totalQty + "@" + entry.getKey();
-            }
-            if (sellIterator.hasNext()) {
-                Map.Entry<Double, LinkedList<Order>> entry = sellIterator.next();
-                int totalQty = entry.getValue().stream().mapToInt(Order::getRemainingQty).sum();
-                sellOutput = totalQty + "@" + entry.getKey();
-            }
-
+            String buyOutput = (i < buyLines.size() ? buyLines.get(i) : "");
+            String sellOutput = (i < sellLines.size() ? sellLines.get(i) : "");
             System.out.printf("%-19s | %s%n", buyOutput, sellOutput);
         }
         System.out.println();
