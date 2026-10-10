@@ -179,7 +179,7 @@ public class OrderBook {
         if (oldPrice != newPrice) {
             LinkedList<Order> oldPriceQueue = orderBook.get(oldPrice);
             if (oldPriceQueue != null){
-                oldPriceQueue.remove(oldPrice);
+                oldPriceQueue.remove(order);
                 if (oldPriceQueue.isEmpty()){
                     orderBook.remove(oldPrice);
                 }
