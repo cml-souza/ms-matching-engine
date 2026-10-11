@@ -83,6 +83,33 @@ public class ConsoleInterface {
         }
     }
 
+    private double readPositivePriceInput() {
+        while (true) {
+            double price = readDoubleInput();
+            if (Double.isFinite(price) && price > 0.0) {
+                return price;
+            }
+            System.out.println("Error: Price must be finite and greater than zero.");
+            System.out.println("Try Again: ");
+        }
+    }
+
+    private int readQuantityInput(String prompt, int minimum) {
+        while (true) {
+            System.out.print(prompt);
+            int quantity = readIntInput();
+            if (quantity >= minimum) {
+                return quantity;
+            }
+            if (minimum == 1) {
+                System.out.println("Error: Quantity must be greater than zero.");
+            } else {
+                System.out.println("Error: New quantity cannot be less than the "
+                        + minimum + " shares already executed.");
+            }
+        }
+    }
+
     private void handleAddOrder() {
         String id = orderIdGenerator.generateId();
         System.out.println("Order ID: " + id);
@@ -136,11 +163,10 @@ public class ConsoleInterface {
         double price = 0.0;
         if (type == OrderType.LIMIT) {
             System.out.println("Enter price: ");
-            price = readDoubleInput();
+            price = readPositivePriceInput();
         }
 
-        System.out.print("Enter quantity (shares): ");
-        int quantity = readIntInput();
+        int quantity = readQuantityInput("Enter quantity (shares): ", 1);
 
         Order order = new Order(id, side, type, price, quantity);
 
@@ -176,18 +202,13 @@ public class ConsoleInterface {
         double newPrice = 0.0;
         if (existingOrder.getType() == OrderType.LIMIT) {
             System.out.println("Enter the new price: ");
-            String priceInput = scanner.nextLine();
-            try {
-                newPrice = Double.parseDouble(priceInput.replace(',', '.'));
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid price format. Please enter a valid number.");
-                return;
-            }
+            newPrice = readPositivePriceInput();
         }
 
-        System.out.println("Enter the new quantity: ");
-        int newQuantity = scanner.nextInt();
-        scanner.nextLine();
+        int executedQuantity = existingOrder.getQuantity() - existingOrder.getRemainingQty();
+        int minimumQuantity = Math.max(1, executedQuantity);
+        int newQuantity = readQuantityInput(
+                "Enter the new quantity: ", minimumQuantity);
 
         orderBook.modifyOrder(orderId, newPrice, newQuantity);
     }

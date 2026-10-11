@@ -67,12 +67,25 @@ class ConsoleInterfaceTest {
     @Test
     void retriesInvalidLimitPriceInput() {
         OrderBook book = new OrderBook();
-        String input = "1\n1\n1\ninvalid\n10\n2\n\n5\n";
+        String input = "1\n1\n1\ninvalid\nNaN\n-10\n10\n2\n5\n";
         String output = TestSupport.runConsole(book, input);
 
         assertTrue(output.contains("Please enter a valid value (Ex: 10.5 or 10,5)."));
+        assertTrue(output.contains("Price must be finite and greater than zero."));
         assertEquals(10.0, book.getOrdersById().get("ID_1").getPrice(), 0.0);
         assertEquals(2, book.getOrdersById().get("ID_1").getQuantity());
+    }
+
+    @Test
+    void retriesNonpositiveQuantityInsteadOfRejectingOrder() {
+        OrderBook book = new OrderBook();
+        String input = "1\n1\n1\n10\n0\n-2\n3\n5\n";
+
+        String output = TestSupport.runConsole(book, input);
+
+        assertTrue(output.contains("Quantity must be greater than zero."));
+        assertEquals(3, book.getOrdersById().get("ID_1").getQuantity());
+        assertTrue(output.contains("Order submitted successfully."));
     }
 
     @Test
@@ -119,6 +132,26 @@ class ConsoleInterfaceTest {
 
         assertEquals(11, book.getOrdersById().get("A").getPrice(), 0.0);
         assertEquals(5, book.getOrdersById().get("A").getQuantity());
+        assertTrue(output.contains("Order modified: A"));
+    }
+
+    @Test
+    void retriesInvalidModificationPriceAndQuantityWithoutChangingTheBookPartially() {
+        OrderBook book = new OrderBook();
+        Order order = TestSupport.order("A", Side.BUY, OrderType.LIMIT, 10, 3);
+        book.addOrderToBook(order);
+        order.reduceRemainingQty(2);
+        String input = "4\nA\nNaN\n-5\n12\n1\n3\n5\n";
+
+        String output = TestSupport.runConsole(book, input);
+
+        assertTrue(output.contains("Price must be finite and greater than zero."));
+        assertTrue(output.contains("New quantity cannot be less than the 2 shares already executed."));
+        assertEquals(12, order.getPrice(), 0.0);
+        assertEquals(3, order.getQuantity());
+        assertEquals(1, order.getRemainingQty());
+        assertEquals(java.util.List.of(order), book.getBuyOrders().get(12.0));
+        assertFalse(book.getBuyOrders().containsKey(10.0));
         assertTrue(output.contains("Order modified: A"));
     }
 

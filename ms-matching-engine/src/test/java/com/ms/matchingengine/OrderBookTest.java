@@ -162,6 +162,21 @@ class OrderBookTest {
     }
 
     @Test
+    void peggedOrderKeepsLastPriceWhenItsReferenceOrderIsRemoved() {
+        OrderBook book = new OrderBook();
+        Order pegged = TestSupport.order("P", Side.BUY, OrderType.PEGGED_BID, 1, 1);
+        Order reference = TestSupport.order("B1", Side.BUY, OrderType.LIMIT, 10, 1);
+        book.addOrderToBook(pegged);
+        book.addOrderToBook(reference);
+
+        assertEquals(10, pegged.getPrice(), 0.0);
+        assertTrue(book.cancelOrder("B1"));
+
+        assertEquals(10, pegged.getPrice(), 0.0);
+        assertEquals(java.util.List.of(pegged), book.getBuyOrders().get(10.0));
+    }
+
+    @Test
     void peggedOfferTracksBestNonPeggedOffer() {
         OrderBook book = new OrderBook();
         Order pegged = TestSupport.order("P", Side.SELL, OrderType.PEGGED_OFFER, 1, 1);
