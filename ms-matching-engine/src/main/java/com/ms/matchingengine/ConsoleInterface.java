@@ -87,11 +87,6 @@ public class ConsoleInterface {
         String id = orderIdGenerator.generateId();
         System.out.println("Order ID: " + id);
 
-        if (id.isEmpty() || id.length() > 5) {
-            System.out.println("Error: The ID must be between 1 and 5 characters long.");
-            return;
-        }
-
         System.out.println("Choose the Side:");
         System.out.println("1. BUY");
         System.out.println("2. SELL");
@@ -146,7 +141,6 @@ public class ConsoleInterface {
 
         System.out.print("Enter quantity (shares): ");
         int quantity = readIntInput();
-        scanner.nextLine();
 
         Order order = new Order(id, side, type, price, quantity);
 

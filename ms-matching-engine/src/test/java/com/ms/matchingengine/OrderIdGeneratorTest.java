@@ -13,4 +13,17 @@ class OrderIdGeneratorTest {
         assertEquals("ID_2", generator.generateId());
         assertEquals("ID_3", generator.generateId());
     }
+
+    @Test
+    void continuesGeneratingIdsPastTwoDigitsAndOrderAcceptsThem() {
+        OrderIdGenerator generator = new OrderIdGenerator();
+        for (int i = 0; i < 99; i++) {
+            generator.generateId();
+        }
+
+        String id = generator.generateId();
+
+        assertEquals("ID_100", id);
+        assertEquals(id, TestSupport.order(id, Side.BUY, OrderType.LIMIT, 10, 1).getId());
+    }
 }

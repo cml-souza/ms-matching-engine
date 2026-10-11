@@ -112,6 +112,19 @@ public class OrderBook {
             return false;
         }
 
+        if (newQuantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero.");
+        }
+        int executedQuantity = order.getQuantity() - order.getRemainingQty();
+        if (newQuantity < executedQuantity) {
+            throw new IllegalArgumentException(
+                    "New quantity cannot be less than already executed quantity (" + executedQuantity + ").");
+        }
+        if (order.getType() == OrderType.LIMIT
+                && (!Double.isFinite(newPrice) || newPrice <= 0.0)) {
+            throw new IllegalArgumentException("Limit order price must be finite and greater than zero.");
+        }
+
         if (order.getType() == OrderType.LIMIT) {
             double oldPrice = order.getPrice();
             Side side = order.getSide();

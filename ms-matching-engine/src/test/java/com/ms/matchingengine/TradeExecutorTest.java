@@ -67,4 +67,42 @@ class TradeExecutorTest {
         assertFalse(book.getOrdersById().containsKey("A"));
         assertFalse(book.getOrdersById().containsKey("M"));
     }
+
+    @Test
+    void buyMarketOrderRepricesPeggedOfferWhenBestOfferIsConsumed() {
+        OrderBook book = new OrderBook();
+        Order peggedOffer = TestSupport.order("P", Side.SELL, OrderType.PEGGED_OFFER, 1, 1);
+        Order bestOffer = TestSupport.order("A", Side.SELL, OrderType.LIMIT, 10, 2);
+        Order nextOffer = TestSupport.order("B", Side.SELL, OrderType.LIMIT, 12, 2);
+        book.addOrderToBook(peggedOffer);
+        book.addOrderToBook(bestOffer);
+        book.addOrderToBook(nextOffer);
+        Order market = TestSupport.order("M", Side.BUY, OrderType.MARKET, 0, 2);
+
+        TestSupport.captureOutput(() -> new TradeExecutor(book).matchMarketOrder(market));
+
+        assertEquals(12, peggedOffer.getPrice(), 0.0);
+        assertEquals(1, peggedOffer.getRemainingQty());
+        assertTrue(book.getOrdersById().containsKey("P"));
+        assertEquals(java.util.List.of(nextOffer, peggedOffer), book.getSellOrders().get(12.0));
+    }
+
+    @Test
+    void sellMarketOrderRepricesPeggedBidWhenBestBidIsConsumed() {
+        OrderBook book = new OrderBook();
+        Order peggedBid = TestSupport.order("P", Side.BUY, OrderType.PEGGED_BID, 1, 1);
+        Order bestBid = TestSupport.order("A", Side.BUY, OrderType.LIMIT, 12, 2);
+        Order nextBid = TestSupport.order("B", Side.BUY, OrderType.LIMIT, 10, 2);
+        book.addOrderToBook(peggedBid);
+        book.addOrderToBook(bestBid);
+        book.addOrderToBook(nextBid);
+        Order market = TestSupport.order("M", Side.SELL, OrderType.MARKET, 0, 2);
+
+        TestSupport.captureOutput(() -> new TradeExecutor(book).matchMarketOrder(market));
+
+        assertEquals(10, peggedBid.getPrice(), 0.0);
+        assertEquals(1, peggedBid.getRemainingQty());
+        assertTrue(book.getOrdersById().containsKey("P"));
+        assertEquals(java.util.List.of(nextBid, peggedBid), book.getBuyOrders().get(10.0));
+    }
 }

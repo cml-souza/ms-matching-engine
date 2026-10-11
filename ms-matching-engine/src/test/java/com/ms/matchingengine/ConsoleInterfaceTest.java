@@ -24,7 +24,7 @@ class ConsoleInterfaceTest {
     @Test
     void addsLimitOrderAndDisplaysBook() {
         OrderBook book = new OrderBook();
-        String input = "1\n1\n1\n10.5\n4\n\n2\n5\n";
+        String input = "1\n1\n1\n10.5\n4\n2\n5\n";
 
         String output = TestSupport.runConsole(book, input);
 

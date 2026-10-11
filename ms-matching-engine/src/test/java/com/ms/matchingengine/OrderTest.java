@@ -24,8 +24,8 @@ class OrderTest {
                 () -> TestSupport.order(null, Side.BUY, OrderType.LIMIT, 1, 1));
         assertThrows(IllegalArgumentException.class,
                 () -> TestSupport.order("  ", Side.BUY, OrderType.LIMIT, 1, 1));
-        assertThrows(IllegalArgumentException.class,
-                () -> TestSupport.order("123456", Side.BUY, OrderType.LIMIT, 1, 1));
+        assertDoesNotThrow(
+                () -> TestSupport.order("ID_100", Side.BUY, OrderType.LIMIT, 1, 1));
     }
 
     @Test

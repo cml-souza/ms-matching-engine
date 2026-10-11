@@ -97,6 +97,41 @@ class OrderBookTest {
     }
 
     @Test
+    void invalidLimitPriceDoesNotChangeOrderOrBook() {
+        OrderBook book = new OrderBook();
+        Order order = TestSupport.order("A", Side.BUY, OrderType.LIMIT, 10, 5);
+        book.addOrderToBook(order);
+
+        assertThrows(IllegalArgumentException.class, () -> book.modifyOrder("A", 0, 8));
+        assertThrows(IllegalArgumentException.class,
+                () -> book.modifyOrder("A", Double.NaN, 8));
+
+        assertEquals(10, order.getPrice(), 0.0);
+        assertEquals(5, order.getQuantity());
+        assertEquals(5, order.getRemainingQty());
+        assertEquals(java.util.List.of(order), book.getBuyOrders().get(10.0));
+        assertFalse(book.getBuyOrders().containsKey(0.0));
+        assertEquals(java.util.Set.of("A"), book.getOrdersById().keySet());
+    }
+
+    @Test
+    void invalidQuantityDoesNotChangePriceOrBookPosition() {
+        OrderBook book = new OrderBook();
+        Order order = TestSupport.order("A", Side.BUY, OrderType.LIMIT, 10, 5);
+        book.addOrderToBook(order);
+        order.reduceRemainingQty(3);
+
+        assertThrows(IllegalArgumentException.class, () -> book.modifyOrder("A", 12, 0));
+        assertThrows(IllegalArgumentException.class, () -> book.modifyOrder("A", 12, 2));
+
+        assertEquals(10, order.getPrice(), 0.0);
+        assertEquals(5, order.getQuantity());
+        assertEquals(2, order.getRemainingQty());
+        assertEquals(java.util.List.of(order), book.getBuyOrders().get(10.0));
+        assertFalse(book.getBuyOrders().containsKey(12.0));
+    }
+
+    @Test
     void modifyNonLimitChangesQuantityButNotPrice() {
         OrderBook book = new OrderBook();
         Order order = TestSupport.order("A", Side.BUY, OrderType.PEGGED_BID, 10, 5);

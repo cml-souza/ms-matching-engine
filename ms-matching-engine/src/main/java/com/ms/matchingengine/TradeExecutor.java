@@ -41,6 +41,8 @@ public class TradeExecutor {
             if (priceQueue.isEmpty()) {
                 oppositeBook.remove(bestPrice);
             }
+
+            orderBook.updatePeggedOrders();
         }
     }
 }
