@@ -95,29 +95,41 @@ public class OrderBook {
     }
 
     public void printBook() {
-        System.out.println("Ordens de Compra    | Ordens de Venda");
-        System.out.println("--------------------|-----------------");
+        System.out.printf("%-5s | %-20s | %-5s | %-20s%n", "ID", "Ordens de Compra", "ID", "Ordens de Venda");
+        System.out.println("----- | -------------------- | ----- | --------------------");
 
-        List<String> buyLines = new ArrayList<>();
-        for (Map.Entry<Double, LinkedList<Order>> buyEntry : buyOrders.entrySet()) {
-            double price = buyEntry.getKey();
-            for (Order order : buyEntry.getValue()) {
-                buyLines.add(order.getRemainingQty() + " @ " + price);
-            }
-        }
-        List<String> sellLines = new ArrayList<>();
-        for (Map.Entry<Double, LinkedList<Order>> sellEntry : sellOrders.entrySet()) {
-            double price = sellEntry.getKey();
-            for (Order order : sellEntry.getValue()) {
-                sellLines.add(order.getRemainingQty() + " @ " + price);
+        List<Order> buyOrdersList = new ArrayList<>();
+        for (Map.Entry<Double, LinkedList<Order>> entry : buyOrders.entrySet()) {
+            for (Order order : entry.getValue()) {
+                buyOrdersList.add(order);
             }
         }
 
-        int maxRows = Math.max(buyLines.size(), sellLines.size());
+        List<Order> sellOrdersList = new ArrayList<>();
+        for (Map.Entry<Double, LinkedList<Order>> entry : sellOrders.entrySet()) {
+            for (Order order : entry.getValue()) {
+                sellOrdersList.add(order);
+            }
+        }
+
+        int maxRows = Math.max(buyOrdersList.size(), sellOrdersList.size());
         for (int i = 0; i < maxRows; i++) {
-            String buyOutput = (i < buyLines.size() ? buyLines.get(i) : "");
-            String sellOutput = (i < sellLines.size() ? sellLines.get(i) : "");
-            System.out.printf("%-19s | %s%n", buyOutput, sellOutput);
+            String buyText = "";
+            String buyId = "";
+            if (i < buyOrdersList.size()) {
+                Order o = buyOrdersList.get(i);
+                buyId = o.getId();
+                buyText = o.getRemainingQty() + " @ " + String.format(Locale.US, "%.2f", o.getPrice());
+            }
+
+            String sellText = "";
+            String sellId = "";
+            if (i < sellOrdersList.size()) {
+                Order o = sellOrdersList.get(i);
+                sellId = o.getId();
+                sellText = o.getRemainingQty() + " @ " + String.format(Locale.US, "%.2f", o.getPrice());
+            }
+            System.out.printf("%-5s | %-20s | %-5s | %-20s%n", buyId, buyText, sellId, sellText);
         }
         System.out.println();
     }
