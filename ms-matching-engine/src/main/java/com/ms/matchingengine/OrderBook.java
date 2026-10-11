@@ -80,7 +80,7 @@ public class OrderBook {
             marketOrder.reduceRemainingQty(executedQuantity);
             restingOrder.reduceRemainingQty(executedQuantity);
 
-            System.out.println("Trade, price: " + bestPrice + ", qty: " + executedQuantity);
+            System.out.println("---- Trade, price: " + bestPrice + ", qty: ----" + executedQuantity);
 
             // After being consumed the market order is removed from the book
             if (restingOrder.getRemainingQty() == 0) {
@@ -143,22 +143,18 @@ public class OrderBook {
         Double bestBid = nonPeggedBestPrice(buyOrders);
         Double bestOffer = nonPeggedBestPrice(sellOrders);
 
-        System.out.println("[DEBUG] Best Bid atual no book: " + bestBid);
-
         for (Order order : ordersById.values()) {
             if (order.getType() != OrderType.PEGGED_BID && order.getType() != OrderType.PEGGED_OFFER){
                 continue;
             }
-            System.out.println("[DEBUG] Analisando Pegged Order ID: " + order.getId() + " | Preço atual dela: " + order.getPrice());
             Double newPrice = null;
             if (order.getType() == OrderType.PEGGED_BID && bestBid != null) {
                 newPrice = bestBid;
             } else if (order.getType() == OrderType.PEGGED_OFFER && bestOffer != null) {
                 newPrice = bestOffer;
             }
-            System.out.println("[DEBUG] NewPrice calculado: " + newPrice);
+
             if (newPrice != null && order.getPrice() != newPrice){
-                System.out.println("[DEBUG] Atualizando preço da pegged order para: " + newPrice);
                 updatePeggedOrderPrice(order, newPrice);
             }
         }
