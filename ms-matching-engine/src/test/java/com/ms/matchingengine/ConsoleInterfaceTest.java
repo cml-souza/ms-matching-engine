@@ -18,13 +18,13 @@ class ConsoleInterfaceTest {
         String output = TestSupport.runConsole(new OrderBook(), "text\n9\n5\n");
 
         assertTrue(output.contains("Please enter a valid value"));
-        assertTrue(output.contains("Unknown option"));
+        assertTrue(output.contains("Only numbers from the list are valid"));
     }
 
     @Test
     void addsLimitOrderAndDisplaysBook() {
         OrderBook book = new OrderBook();
-        String input = "1\n1\n1\n0\n10.5\n4\n\n2\n5\n";
+        String input = "1\n1\n1\n10.5\n4\n\n2\n5\n";
 
         String output = TestSupport.runConsole(book, input);
 
@@ -48,14 +48,14 @@ class ConsoleInterfaceTest {
         String invalidSideOutput = TestSupport.runConsole(new OrderBook(), "1\n9\n5\n");
         String invalidTypeOutput = TestSupport.runConsole(new OrderBook(), "1\n1\n9\n5\n");
 
-        assertTrue(invalidSideOutput.contains("Please enter a valid side."));
+        assertTrue(invalidSideOutput.contains("Only numbers from list are valid"));
         assertTrue(invalidTypeOutput.contains("Please enter a valid value."));
     }
 
     @Test
-    void acceptsCommaDecimalPricesAndAddsPeggedBid() {
+    void addsPeggedBidWithoutAnExplicitPrice() {
         OrderBook book = new OrderBook();
-        String input = "1\n1\n3\n0,0\n2\n\n5\n";
+        String input = "1\n1\n3\n2\n\n5\n";
 
         String output = TestSupport.runConsole(book, input);
 
@@ -65,17 +65,21 @@ class ConsoleInterfaceTest {
     }
 
     @Test
-    void rejectsInvalidExplicitLimitPrice() {
-        String output = TestSupport.runConsole(new OrderBook(), "1\n1\n1\n0\ninvalid\n5\n");
+    void retriesInvalidLimitPriceInput() {
+        OrderBook book = new OrderBook();
+        String input = "1\n1\n1\ninvalid\n10\n2\n\n5\n";
+        String output = TestSupport.runConsole(book, input);
 
-        assertTrue(output.contains("Invalid price format."));
+        assertTrue(output.contains("Please enter a valid value (Ex: 10.5 or 10,5)."));
+        assertEquals(10.0, book.getOrdersById().get("ID_1").getPrice(), 0.0);
+        assertEquals(2, book.getOrdersById().get("ID_1").getQuantity());
     }
 
     @Test
     void matchesMarketOrderAgainstExistingLiquidity() {
         OrderBook book = new OrderBook();
         book.addOrderToBook(TestSupport.order("ASK", Side.SELL, OrderType.LIMIT, 10, 3));
-        String input = "1\n1\n2\n0\n2\n\n5\n";
+        String input = "1\n1\n2\n2\n\n5\n";
 
         String output = TestSupport.runConsole(book, input);
 

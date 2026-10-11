@@ -45,7 +45,7 @@ public class ConsoleInterface {
                     System.out.println("----- Closing the Matching Engine -----");
                     break;
                 default:
-                    System.out.println("Unknown option. Please try again.");
+                    System.out.println("Error: Please enter a valid value. Only numbers from the list are valid");
             }
         }
     }
@@ -62,7 +62,7 @@ public class ConsoleInterface {
 
     private int readIntInput() {
         while (!scanner.hasNextInt()) {
-            System.out.println("Error: Please enter a valid value (Ex: 1, 2, 3).");
+            System.out.println("Error: Please enter a valid value. Only numbers from the list are valid");
             scanner.next();
             System.out.println("Try Again: ");
         }
@@ -106,7 +106,7 @@ public class ConsoleInterface {
                 side = Side.SELL;
                 break;
             default:
-                System.out.println("Please enter a valid side.");
+                System.out.println("Error: Please enter a valid value. Only numbers from list are valid");
                 return;
         }
 
@@ -134,20 +134,14 @@ public class ConsoleInterface {
                 type = (side == Side.BUY) ? OrderType.PEGGED_BID : OrderType.PEGGED_OFFER;
                 break;
             default:
-                System.out.println("Please enter a valid value.");
+                System.out.println("Error: Please enter a valid value. Only numbers from the list are valid");
                 return;
         }
 
-        double price = readDoubleInput();
+        double price = 0.0;
         if (type == OrderType.LIMIT) {
             System.out.println("Enter price: ");
-            String priceInput = scanner.nextLine();
-            try {
-                price = Double.parseDouble(priceInput.replace(',', '.'));
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid price format. Please enter a valid number.");
-                return;
-            }
+            price = readDoubleInput();
         }
 
         System.out.print("Enter quantity (shares): ");
