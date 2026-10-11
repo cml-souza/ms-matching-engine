@@ -30,10 +30,43 @@ public class OrderBook {
 
         // Orders at the same price follow FIFO priority.
         orderBook.computeIfAbsent(order.getPrice(), k -> new LinkedList<>()).addLast(order);
+        updatePeggedOrders();
+    }
+
+    public boolean isValidOrder(Order order) {
+        if (order == null) {
+            return false;
+        }
+
+        if (order.getId() == null || order.getId().isBlank()) {
+            return false;
+        }
+
+        if (ordersById.containsKey(order.getId())) {
+            return false;
+        }
+
+        if (order.getQuantity() <= 0) {
+            return false;
+        }
+
+        if (order.getType() == OrderType.LIMIT) {
+            if (!Double.isFinite(order.getPrice())
+                    || order.getPrice() <= 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void matchMarketOrder(Order marketOrder) {
         TreeMap<Double, LinkedList<Order>> oppositeBook = (marketOrder.getSide() == Side.BUY) ? sellOrders : buyOrders;
+
+        if (oppositeBook.isEmpty()) {
+            System.out.println("Market order rejected: No liquidity available in the order book.");
+            return;
+        }
 
         while (!oppositeBook.isEmpty() && marketOrder.getRemainingQty() > 0) {
             Double bestPrice = oppositeBook.firstKey();
