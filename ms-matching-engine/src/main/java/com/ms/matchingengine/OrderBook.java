@@ -201,20 +201,22 @@ public class OrderBook {
             return false;
         }
 
-        double oldPrice = order.getPrice();
-        Side side = order.getSide();
-        TreeMap<Double, LinkedList<Order>> orderBook = (side == Side.BUY) ? buyOrders : sellOrders;
+        if (order.getType() == OrderType.LIMIT) {
+            double oldPrice = order.getPrice();
+            Side side = order.getSide();
+            TreeMap<Double, LinkedList<Order>> orderBook = (side == Side.BUY) ? buyOrders : sellOrders;
 
-        if (oldPrice != newPrice) {
-            LinkedList<Order> oldPriceQueue = orderBook.get(oldPrice);
-            if (oldPriceQueue != null){
-                oldPriceQueue.remove(order);
-                if (oldPriceQueue.isEmpty()){
-                    orderBook.remove(oldPrice);
+            if (oldPrice != newPrice) {
+                LinkedList<Order> oldPriceQueue = orderBook.get(oldPrice);
+                if (oldPriceQueue != null){
+                    oldPriceQueue.remove(order);
+                    if (oldPriceQueue.isEmpty()){
+                        orderBook.remove(oldPrice);
+                    }
                 }
+                order.setPrice(newPrice);
+                orderBook.computeIfAbsent(newPrice, k -> new LinkedList<>()).addLast(order);
             }
-            order.setPrice(newPrice);
-            orderBook.computeIfAbsent(newPrice, k -> new LinkedList<>()).addLast(order);
         }
         order.setQuantity(newQuantity);
         updatePeggedOrders();
