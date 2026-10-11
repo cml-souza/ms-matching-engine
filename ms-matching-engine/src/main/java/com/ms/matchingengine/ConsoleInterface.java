@@ -4,11 +4,17 @@ import java.util.Scanner;
 
 public class ConsoleInterface {
     private OrderBook orderBook;
+    private OrderBookPrinter orderBookPrinter;
+    private OrderValidator orderValidator;
+    private TradeExecutor tradeExecutor;
     private Scanner scanner;
 
     public ConsoleInterface(OrderBook orderBook) {
         this.orderBook = orderBook;
         this.scanner = new Scanner(System.in);
+        this.orderBookPrinter = new OrderBookPrinter(orderBook);
+        this.orderValidator = new OrderValidator(orderBook);
+        this.tradeExecutor = new TradeExecutor(orderBook);
     }
 
     public void start() {
@@ -24,8 +30,7 @@ public class ConsoleInterface {
                     handleAddOrder();
                     break;
                 case 2:
-                    System.out.println("\n--- ORDERBOOK VISUALIZATON ---");
-                    orderBook.printBook();
+                    orderBookPrinter.printBook();
                     break;
                 case 3:
                     handleCancelOrder();
@@ -124,7 +129,7 @@ public class ConsoleInterface {
             System.out.println("Enter price: ");
             String priceInput = scanner.nextLine();
             try {
-                price = Double.parseDouble(priceInput.replace(',', '.')); // Aceita tanto vírgula quanto ponto
+                price = Double.parseDouble(priceInput.replace(',', '.'));
             } catch (NumberFormatException e) {
                 System.out.println("Invalid price format. Please enter a valid number.");
                 return;
@@ -137,9 +142,9 @@ public class ConsoleInterface {
 
         Order order = new Order(id, side, type, price, quantity);
 
-            if (orderBook.isValidOrder(order)) {
+            if (orderValidator.isValidOrder(order)) {
                 if (type == OrderType.MARKET) {
-                    orderBook.matchMarketOrder(order);
+                    tradeExecutor.matchMarketOrder(order);
                 } else {
                     orderBook.addOrderToBook(order);
                     System.out.println("Order submitted successfully.");
@@ -169,8 +174,13 @@ public class ConsoleInterface {
         double newPrice = 0.0;
         if (existingOrder.getType() == OrderType.LIMIT) {
             System.out.println("Enter the new price: ");
-            newPrice = scanner.nextDouble();
-            scanner.nextLine();
+            String priceInput = scanner.nextLine();
+            try {
+                newPrice = Double.parseDouble(priceInput.replace(',', '.'));
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid price format. Please enter a valid number.");
+                return;
+            }
         }
 
         System.out.println("Enter the new quantity: ");
