@@ -65,8 +65,13 @@ public class ConsoleInterface {
     }
 
     private void handleAddOrder() {
-        System.out.println("Enter order ID: ");
-        String id = scanner.nextLine();
+        System.out.println("Enter order ID (Max: 5 characters): ");
+        String id = scanner.nextLine().trim();
+
+        if (id.isEmpty() || id.length() > 5) {
+            System.out.println("Error: The ID must be between 1 and 5 characters long.");
+            return;
+        }
 
         System.out.println("Choose the Side:");
         System.out.println("1. BUY");

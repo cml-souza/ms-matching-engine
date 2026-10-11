@@ -13,6 +13,9 @@ public class Order {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("Order ID cannot be null or empty.");
         }
+        if (id.length() > 5) {
+            throw new IllegalArgumentException("Order ID must have 5 characters max.");
+        }
         if (side == null || type == null) {
             throw new IllegalArgumentException("Side and OrderType cannot be null.");
         }
