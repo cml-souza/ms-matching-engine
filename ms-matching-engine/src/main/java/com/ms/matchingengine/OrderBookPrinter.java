@@ -10,7 +10,7 @@ public class OrderBookPrinter {
     }
 
     public void printBook() {
-        System.out.println("\n--- ORDERBOOK VISUALIZATON ---");
+        System.out.println("\n--------------- ORDERBOOK VISUALIZATON -------------------- ");
         System.out.printf("%-5s | %-20s | %-5s | %-20s%n", "ID", "Ordens de Compra", "ID", "Ordens de Venda");
         System.out.println("----- | -------------------- | ----- | --------------------");
 
