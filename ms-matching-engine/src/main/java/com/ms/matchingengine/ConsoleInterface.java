@@ -7,6 +7,7 @@ public class ConsoleInterface {
     private OrderBookPrinter orderBookPrinter;
     private OrderValidator orderValidator;
     private TradeExecutor tradeExecutor;
+    private OrderIdGenerator orderIdGenerator;
     private Scanner scanner;
 
     public ConsoleInterface(OrderBook orderBook) {
@@ -15,6 +16,7 @@ public class ConsoleInterface {
         this.orderBookPrinter = new OrderBookPrinter(orderBook);
         this.orderValidator = new OrderValidator(orderBook);
         this.tradeExecutor = new TradeExecutor(orderBook);
+        this.orderIdGenerator = new OrderIdGenerator();
     }
 
     public void start() {
@@ -70,8 +72,8 @@ public class ConsoleInterface {
     }
 
     private void handleAddOrder() {
-        System.out.println("Enter order ID (Max: 5 characters): ");
-        String id = scanner.nextLine().trim();
+        String id = orderIdGenerator.generateId();
+        System.out.println("Order ID: " + id);
 
         if (id.isEmpty() || id.length() > 5) {
             System.out.println("Error: The ID must be between 1 and 5 characters long.");
