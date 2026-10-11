@@ -25,7 +25,7 @@ public class ConsoleInterface {
 
         while (running) {
             printMenu();
-            int input = readInput();
+            int input = readIntInput();
 
             switch (input) {
                 case 1:
@@ -60,14 +60,26 @@ public class ConsoleInterface {
         System.out.print("Option: ");
     }
 
-    private int readInput() {
-        if (scanner.hasNextInt()) {
-            int input = scanner.nextInt();
-            scanner.nextLine();
-            return input;
-        } else {
-            scanner.nextLine();
-            return -1;
+    private int readIntInput() {
+        while (!scanner.hasNextInt()) {
+            System.out.println("Error: Please enter a valid value (Ex: 1, 2, 3).");
+            scanner.next();
+            System.out.println("Try Again: ");
+        }
+        int value = scanner.nextInt();
+        scanner.nextLine();
+        return value;
+    }
+
+    private double readDoubleInput() {
+        while (true) {
+            String input = scanner.nextLine().trim();
+            try {
+                return Double.parseDouble(input.replace(',', '.'));
+            } catch (NumberFormatException e) {
+                System.out.println("Error: Please enter a valid value (Ex: 10.5 or 10,5).");
+                System.out.println("Try Again: ");
+            }
         }
     }
 
@@ -84,7 +96,7 @@ public class ConsoleInterface {
         System.out.println("1. BUY");
         System.out.println("2. SELL");
         System.out.print("Option (Side): ");
-        int sideOption = readInput();
+        int sideOption = readIntInput();
         Side side;
         switch (sideOption) {
             case 1:
@@ -103,7 +115,7 @@ public class ConsoleInterface {
         System.out.println("2. MARKET");
         System.out.println("3. PEGGED");
         System.out.print("Option (Type): ");
-        int typeOption = readInput();
+        int typeOption = readIntInput();
 
         OrderType type;
         switch (typeOption) {
@@ -126,7 +138,7 @@ public class ConsoleInterface {
                 return;
         }
 
-        double price = 0.0;
+        double price = readDoubleInput();
         if (type == OrderType.LIMIT) {
             System.out.println("Enter price: ");
             String priceInput = scanner.nextLine();
@@ -139,7 +151,7 @@ public class ConsoleInterface {
         }
 
         System.out.print("Enter quantity (shares): ");
-        int quantity = scanner.nextInt();
+        int quantity = readIntInput();
         scanner.nextLine();
 
         Order order = new Order(id, side, type, price, quantity);
